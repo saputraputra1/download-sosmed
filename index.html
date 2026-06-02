@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VidGrab — Download Instagram & TikTok</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.15);
+      --text: #f0f0f5;
+      --muted: #7a7a9a;
+      --ig1: #f9ce34;
+      --ig2: #ee2a7b;
+      --ig3: #6228d7;
+      --tk1: #00f2ea;
+      --tk2: #ff0050;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(108,99,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(108,99,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
+    .orb-1 { width: 500px; height: 500px; background: rgba(108,99,255,0.12); top: -100px; left: -100px; }
+    .orb-2 { width: 400px; height: 400px; background: rgba(255,101,132,0.08); bottom: -80px; right: -80px; }
+    .orb-3 { width: 300px; height: 300px; background: rgba(0,242,234,0.06); top: 50%; left: 60%; }
+
+    .container { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 0 24px; }
+
+    header {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 24px 40px;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      background: rgba(10,10,15,0.6);
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .logo span { background: none; -webkit-text-fill-color: var(--text); }
+
+    .badge {
+      font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 20px;
+      background: rgba(108,99,255,0.15); border: 1px solid rgba(108,99,255,0.3);
+      color: #a8a4ff; letter-spacing: 0.5px;
+    }
+
+    .hero { text-align: center; padding: 80px 0 60px; }
+
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 24px;
+    }
+    .hero-tag::before, .hero-tag::after { content: ''; width: 32px; height: 1px; background: var(--border-hover); }
+
+    .hero h1 {
+      font-family: 'Syne', sans-serif; font-size: clamp(36px, 6vw, 64px);
+      font-weight: 800; line-height: 1.08; letter-spacing: -2px; margin-bottom: 20px;
+    }
+    .hero h1 .line-1 { display: block; color: var(--text); }
+    .hero h1 .line-2 {
+      display: block;
+      background: linear-gradient(135deg, var(--tk1) 0%, var(--accent) 50%, var(--tk2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .hero p { font-size: 17px; color: var(--muted); font-weight: 300; max-width: 420px; margin: 0 auto 48px; line-height: 1.6; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 24px;
+      padding: 32px; position: relative; overflow: hidden; transition: border-color 0.3s;
+    }
+    .card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--tk1), var(--accent), var(--tk2));
+      opacity: 1;
+    }
+
+    .input-wrap { display: flex; gap: 12px; margin-bottom: 20px; }
+
+    .url-input {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px 20px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .url-input::placeholder { color: var(--muted); }
+    .url-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,99,255,0.15); }
+
+    .btn-fetch {
+      padding: 16px 28px;
+      background: linear-gradient(135deg, var(--accent), #8a84ff);
+      border: none; border-radius: 14px; color: #fff;
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px;
+      cursor: pointer; white-space: nowrap;
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-fetch:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-fetch:active { transform: translateY(0); }
+    .btn-fetch:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .hint { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .hint svg { width: 14px; height: 14px; opacity: 0.6; }
+
+    .paste-btn {
+      color: var(--accent); background: none; border: none;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+      cursor: pointer; padding: 0; transition: opacity 0.2s;
+    }
+    .paste-btn:hover { opacity: 0.75; }
+
+    .loading-wrap {
+      display: none; flex-direction: column; align-items: center; gap: 16px; padding: 32px 0;
+    }
+    .spinner {
+      width: 44px; height: 44px; border: 3px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: var(--muted); font-size: 14px; text-align: center; }
+    .loading-sub { color: var(--muted); font-size: 12px; opacity: 0.6; }
+
+    .result-wrap { display: none; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 24px; }
+
+    .result-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+
+    .result-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--tk1), var(--tk2));
+    }
+    .result-icon svg { width: 20px; height: 20px; }
+    .result-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); }
+    .result-sub { font-size: 13px; color: var(--muted); }
+
+    .dl-options { display: flex; flex-direction: column; gap: 10px; }
+
+    .dl-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 14px; transition: border-color 0.2s; gap: 12px;
+    }
+    .dl-row:hover { border-color: var(--border-hover); }
+
+    .dl-info { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+
+    .dl-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .dl-icon.video { background: rgba(108,99,255,0.15); color: var(--accent); }
+    .dl-icon.audio { background: rgba(0,242,234,0.1); color: var(--tk1); }
+    .dl-icon.nowm  { background: rgba(255,0,80,0.1);  color: var(--tk2); }
+    .dl-icon svg { width: 18px; height: 18px; }
+
+    .dl-label { font-size: 14px; font-weight: 500; color: var(--text); }
+    .dl-sublabel { font-size: 12px; color: var(--muted); }
+
+    .btn-dl {
+      display: flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 10px; border: 1px solid var(--border);
+      background: transparent; color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none;
+      transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+    }
+    .btn-dl:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-dl svg { width: 14px; height: 14px; }
+
+    .error-wrap {
+      display: none; margin-top: 20px; padding: 16px 20px;
+      background: rgba(255,50,50,0.08); border: 1px solid rgba(255,50,50,0.2);
+      border-radius: 14px; color: #ff6b6b; font-size: 14px;
+      align-items: center; gap: 12px;
+    }
+    .error-wrap svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* thumbnail preview */
+    .thumb-wrap {
+      display: none;
+      margin-bottom: 20px;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      max-height: 220px;
+    }
+    .thumb-wrap img { width: 100%; object-fit: cover; display: block; }
+    .thumb-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
+    }
+
+    .how-section { padding: 64px 0; }
+    .section-title {
+      font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700;
+      text-align: center; margin-bottom: 40px; letter-spacing: -0.5px;
+    }
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+    .step-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+      padding: 28px 24px; text-align: center; transition: border-color 0.2s, transform 0.2s;
+    }
+    .step-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+    .step-num {
+      font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; line-height: 1; margin-bottom: 16px;
+    }
+    .step-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .step-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    footer {
+      border-top: 1px solid var(--border); padding: 32px 40px; text-align: center;
+      color: var(--muted); font-size: 13px; position: relative; z-index: 1;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    .toast {
+      position: fixed; bottom: 32px; right: 32px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 14px; padding: 14px 20px;
+      font-size: 14px; color: var(--text); display: flex; align-items: center; gap: 10px;
+      transform: translateY(80px); opacity: 0; transition: all 0.3s; z-index: 100;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4); max-width: 320px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .toast.success svg { color: #4ade80; }
+    .toast.error svg { color: #f87171; }
+
+    @media (max-width: 600px) {
+      header { padding: 20px 24px; }
+      .input-wrap { flex-direction: column; }
+      .btn-fetch { width: 100%; justify-content: center; }
+      .dl-row { flex-direction: column; align-items: flex-start; }
+      .btn-dl { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<header>
+  <div class="logo">Vid<span>Grab</span></div>
+  <span class="badge">SnapTik Powered</span>
+</header>
+
+<div class="container">
+  <section class="hero">
+    <div class="hero-tag">No watermark · No login · Gratis</div>
+    <h1>
+      <span class="line-1">Download Video</span>
+      <span class="line-2">TikTok Tanpa Watermark</span>
+    </h1>
+    <p>Paste link TikTok, langsung download. Gratis, cepat, dan tanpa watermark.</p>
+
+    <div class="card" id="mainCard">
+
+      <!-- URL input -->
+      <div class="input-wrap">
+        <input
+          type="url"
+          class="url-input"
+          id="urlInput"
+          placeholder="Paste link TikTok di sini..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button class="btn-fetch" id="fetchBtn" onclick="handleFetch()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download
+        </button>
+      </div>
+
+      <div class="hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+        <button class="paste-btn" onclick="pasteFromClipboard()">Tempel dari clipboard ↗</button>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-wrap" id="loadingWrap">
+        <div class="spinner"></div>
+        <span class="loading-text" id="loadingText">Memproses link...</span>
+        <span class="loading-sub" id="loadingSubText">Mohon tunggu sebentar</span>
+      </div>
+
+      <!-- Result -->
+      <div class="result-wrap" id="resultWrap">
+        <!-- Thumbnail -->
+        <div class="thumb-wrap" id="thumbWrap">
+          <img id="thumbImg" src="" alt="thumbnail" />
+          <div class="thumb-overlay"></div>
+        </div>
+
+        <div class="result-header" id="resultHeader"></div>
+        <div class="dl-options" id="dlOptions"></div>
+      </div>
+
+      <!-- Error -->
+      <div class="error-wrap" id="errorWrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <circle cx="12" cy="16" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+        <div>
+          <div id="errorMsg">Terjadi kesalahan.</div>
+          <div id="errorSub" style="font-size:12px;opacity:0.7;margin-top:3px;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW TO USE -->
+  <section class="how-section">
+    <div class="section-title">Cara Pakai</div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-title">Salin Link</div>
+        <div class="step-desc">Buka TikTok, tap Share, lalu salin link videonya.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-title">Paste URL</div>
+        <div class="step-desc">Tempel link di kolom di atas atau tekan "Tempel dari clipboard".</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-title">Download!</div>
+        <div class="step-desc">Pilih format video atau audio, klik Download — langsung tersimpan.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  VidGrab — Didukung oleh SnapTik API.<br/>
+  <small style="opacity:0.5; margin-top:6px; display:block;">
+    Gunakan hanya untuk konten publik yang kamu punya hak aksesnya.
+  </small>
+</footer>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+  <span id="toastMsg">OK</span>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIG — Ganti dengan URL proxy kamu jika deploy
+//  Jika pakai Vercel: '/api/snaptik'
+//  Jika langsung (test lokal): 'https://snaptik.net/api/ajaxSearch'
+// ══════════════════════════════════════════════
+const SNAPTIK_ENDPOINT = '/api/snaptik'; // ganti ke URL snaptik langsung jika CORS ok
+
+// ══════════════════════════════════════════════
+//  UTILITY
+// ══════════════════════════════════════════════
+function isValidURL(url) {
+  try { new URL(url); return true; } catch { return false; }
+}
+
+function isTikTok(url) {
+  return /tiktok\.com/i.test(url) || /vm\.tiktok\.com/i.test(url) || /vt\.tiktok\.com/i.test(url);
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  const icon = t.querySelector('svg');
+  t.className = 'toast ' + type;
+  document.getElementById('toastMsg').textContent = msg;
+  icon.innerHTML = type === 'error'
+    ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+    : '<polyline points="20 6 9 17 4 12"/>';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function resetResult() {
+  document.getElementById('resultWrap').style.display = 'none';
+  document.getElementById('loadingWrap').style.display = 'none';
+  document.getElementById('errorWrap').style.display = 'none';
+  document.getElementById('thumbWrap').style.display = 'none';
+}
+
+function showError(msg, sub = '') {
+  document.getElementById('loadingWrap').style.display = 'none';
+  document.getElementById('errorMsg').textContent = msg;
+  document.getElementById('errorSub').textContent = sub;
+  document.getElementById('errorWrap').style.display = 'flex';
+}
+
+function setLoading(text = 'Memproses...', sub = '') {
+  document.getElementById('loadingText').textContent = text;
+  document.getElementById('loadingSubText').textContent = sub;
+  document.getElementById('loadingWrap').style.display = 'flex';
+}
+
+// ══════════════════════════════════════════════
+//  SVG ICONS
+// ══════════════════════════════════════════════
+const DL_SVG   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+const VID_SVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>`;
+const AUD_SVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
+const NOWM_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>`;
+
+// ══════════════════════════════════════════════
+//  BUILD DOWNLOAD ROW
+// ══════════════════════════════════════════════
+function makeDlRow(iconClass, iconSvg, label, sublabel, downloadUrl) {
+  const row = document.createElement('div');
+  row.className = 'dl-row';
+  row.innerHTML = `
+    <div class="dl-info">
+      <div class="dl-icon ${iconClass}">${iconSvg}</div>
+      <div>
+        <div class="dl-label">${label}</div>
+        <div class="dl-sublabel">${sublabel}</div>
+      </div>
+    </div>
+    <a class="btn-dl" href="${downloadUrl}" target="_blank" rel="noopener noreferrer">
+      ${DL_SVG} Download
+    </a>
+  `;
+  return row;
+}
+
+// ══════════════════════════════════════════════
+//  PARSE SNAPTIK HTML RESPONSE
+//  Snaptik returns { data: "<html>..." } — we parse it to extract links
+// ══════════════════════════════════════════════
+function parseSnaptikHTML(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  const result = {
+    title: '',
+    thumbnail: '',
+    videos: [],   // { label, url, quality }
+    audios: [],   // { label, url }
+  };
+
+  // Title
+  const titleEl = doc.querySelector('h3, .video-title, [class*="title"]');
+  if (titleEl) result.title = titleEl.textContent.trim();
+
+  // Thumbnail
+  const imgEl = doc.querySelector('img[src*="tiktok"], img[src*="p16-sign"], img[src*="p77-sign"], img[src*="p19-sign"], .result-media img, img');
+  if (imgEl) result.thumbnail = imgEl.src || imgEl.getAttribute('src');
+
+  // Download links — snaptik wraps them in <a> tags with class containing "download" or href to CDN
+  const allLinks = doc.querySelectorAll('a[href]');
+  allLinks.forEach(a => {
+    const href = a.href || a.getAttribute('href') || '';
+    const text = a.textContent.trim().toLowerCase();
+    const cls  = (a.className || '').toLowerCase();
+
+    if (!href || href === '#' || href.startsWith('javascript')) return;
+
+    // Audio
+    if (text.includes('mp3') || text.includes('audio') || cls.includes('music') || cls.includes('audio')) {
+      result.audios.push({ label: a.textContent.trim() || 'Audio MP3', url: href });
+      return;
+    }
+
+    // Video without watermark
+    if (text.includes('without') || text.includes('tanpa') || text.includes('no water') ||
+        cls.includes('nowm') || cls.includes('no-wm') || cls.includes('without')) {
+      result.videos.unshift({ label: 'Video Tanpa Watermark', url: href, quality: 'HD' });
+      return;
+    }
+
+    // Generic download link (likely video)
+    if (href.includes('tikcdn') || href.includes('snaptik') || href.includes('.mp4') ||
+        cls.includes('dl') || cls.includes('download') || text.includes('download') || text.includes('hd')) {
+      result.videos.push({ label: a.textContent.trim() || 'Video HD', url: href, quality: '' });
+    }
+  });
+
+  // Also check buttons with data-* attributes
+  const btns = doc.querySelectorAll('[data-url], [data-href]');
+  btns.forEach(btn => {
+    const url = btn.getAttribute('data-url') || btn.getAttribute('data-href');
+    if (url && !result.videos.find(v => v.url === url)) {
+      result.videos.push({ label: btn.textContent.trim() || 'Video', url, quality: '' });
+    }
+  });
+
+  return result;
+}
+
+// ══════════════════════════════════════════════
+//  RENDER RESULT
+// ══════════════════════════════════════════════
+function renderResult(parsed, rawData) {
+  const opts = document.getElementById('dlOptions');
+  opts.innerHTML = '';
+
+  // Thumbnail
+  if (parsed.thumbnail) {
+    const tw = document.getElementById('thumbWrap');
+    document.getElementById('thumbImg').src = parsed.thumbnail;
+    tw.style.display = 'block';
+  }
+
+  // Header
+  document.getElementById('resultHeader').innerHTML = `
+    <div class="result-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
+      </svg>
+    </div>
+    <div>
+      <div class="result-title">${parsed.title || 'Video Siap Download'}</div>
+      <div class="result-sub">${parsed.videos.length} video · ${parsed.audios.length} audio tersedia</div>
+    </div>
+  `;
+
+  // Video rows
+  if (parsed.videos.length > 0) {
+    parsed.videos.forEach((v, i) => {
+      const isNoWM = v.label.toLowerCase().includes('tanpa') || v.label.toLowerCase().includes('without') || i === 0;
+      opts.appendChild(makeDlRow(
+        isNoWM ? 'nowm' : 'video',
+        isNoWM ? NOWM_SVG : VID_SVG,
+        v.label || (i === 0 ? 'Video Tanpa Watermark' : 'Video HD'),
+        v.quality ? v.quality : (i === 0 ? 'Kualitas terbaik · Tanpa watermark' : 'MP4'),
+        v.url
+      ));
+    });
+  }
+
+  // Audio rows
+  parsed.audios.forEach(a => {
+    opts.appendChild(makeDlRow('audio', AUD_SVG, a.label || 'Audio MP3', 'Ekstrak suara dari video', a.url));
+  });
+
+  // Fallback: no links found
+  if (parsed.videos.length === 0 && parsed.audios.length === 0) {
+    // Try to show raw HTML for debugging
+    const dbg = document.createElement('div');
+    dbg.style.cssText = 'font-size:12px;color:var(--muted);padding:12px;background:var(--surface2);border-radius:10px;word-break:break-all;max-height:200px;overflow:auto;';
+    dbg.textContent = 'Tidak ada link ditemukan. Response mentah: ' + JSON.stringify(rawData).slice(0, 300);
+    opts.appendChild(dbg);
+  }
+
+  document.getElementById('resultWrap').style.display = 'block';
+}
+
+// ══════════════════════════════════════════════
+//  CALL SNAPTIK API
+// ══════════════════════════════════════════════
+async function callSnaptik(videoUrl) {
+  const body = new URLSearchParams({ url: videoUrl, lang: 'id' });
+
+  // Try direct first (works if CORS header is present), then via proxy
+  const endpoints = [
+    'https://snaptik.net/api/ajaxSearch',   // direct — may work if CORS ok
+    SNAPTIK_ENDPOINT,                        // via Vercel proxy
+  ];
+
+  let lastError = '';
+
+  for (const endpoint of endpoints) {
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 15000);
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'Accept': '*/*',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: body.toString(),
+        signal: controller.signal,
+      });
+
+      clearTimeout(tid);
+
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      const data = await res.json();
+      return { data, endpoint };
+
+    } catch (err) {
+      lastError = err.message;
+      // CORS error? try next endpoint
+      if (err.name === 'TypeError' || err.message.includes('Failed to fetch')) continue;
+      throw err;
+    }
+  }
+
+  throw new Error('Semua endpoint gagal: ' + lastError);
+}
+
+// ══════════════════════════════════════════════
+//  PASTE
+// ══════════════════════════════════════════════
+async function pasteFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    document.getElementById('urlInput').value = text;
+    showToast('Link berhasil ditempel!');
+  } catch {
+    showToast('Tidak bisa akses clipboard. Paste manual ya!', 'error');
+  }
+}
+
+document.getElementById('urlInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleFetch();
+});
+
+// ══════════════════════════════════════════════
+//  MAIN HANDLER
+// ══════════════════════════════════════════════
+async function handleFetch() {
+  const url = document.getElementById('urlInput').value.trim();
+  const fetchBtn = document.getElementById('fetchBtn');
+
+  if (!url) { showToast('Masukkan link TikTok terlebih dahulu!', 'error'); return; }
+  if (!isValidURL(url)) { showError('URL tidak valid.', 'Pastikan link yang disalin benar.'); return; }
+  if (!isTikTok(url)) { showError('Bukan link TikTok.', 'Masukkan link dari tiktok.com'); return; }
+
+  resetResult();
+  fetchBtn.disabled = true;
+
+  try {
+    setLoading('Memproses link...', 'Menghubungi snaptik.net');
+
+    const { data, endpoint } = await callSnaptik(url);
+
+    document.getElementById('loadingWrap').style.display = 'none';
+
+    // Snaptik returns { data: "<html>", error: 0|1, mess: "..." }
+    if (data.error && data.error !== 0 && data.error !== '0') {
+      showError(data.mess || 'Gagal memproses video.', 'error: ' + data.error);
+      return;
+    }
+
+    const htmlContent = data.data || data.html || data.result || '';
+    if (!htmlContent) {
+      showError('Response kosong dari server.', JSON.stringify(data).slice(0, 100));
+      return;
+    }
+
+    const parsed = parseSnaptikHTML(htmlContent);
+    renderResult(parsed, data);
+    showToast('Video berhasil diproses!');
+
+  } catch (err) {
+    const msg = err.name === 'AbortError'
+      ? 'Timeout — server tidak merespons.'
+      : err.message || 'Terjadi kesalahan jaringan.';
+    showError('Gagal terhubung ke snaptik.', msg);
+  } finally {
+    fetchBtn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
